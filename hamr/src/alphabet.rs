@@ -66,13 +66,14 @@ pub const OUTPUT_ALPHABET_EMOJI: &[char] = &[];
 mod tests {
     use super::*;
     use rstest::*;
-    use std::assert_matches;
 
     #[rstest]
     #[case(Alphabet::Ascii, "!", 1)]
     #[case(Alphabet::Ascii, "A", 30)]
     #[case(Alphabet::Ascii, "!!", 85)]
     #[case(Alphabet::Ascii, "!!!", 7141)]
+    #[case(Alphabet::Qr, "$", 1)]
+    #[case(Alphabet::Qr, "$$", 44)]
     fn str_to_number_works(
         #[case] alphabet: Alphabet,
         #[case] input: &str,
