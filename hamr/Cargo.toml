@@ -5,3 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+clap = { workspace = true, features = ["derive"], optional = true }
+
+[features]
+default = ["std"]
+std = ["dep:clap"]

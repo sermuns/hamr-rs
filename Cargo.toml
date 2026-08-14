@@ -8,3 +8,5 @@ edition = "2024"
 license = "MIT"
 
 [workspace.dependencies]
+clap = { version = "4", default-features = false }
+thiserror = { version = "2", default-features = false }
