@@ -186,14 +186,14 @@ checksum = "e629b9b98ef3dd8afe6ca2bd0f89306cec16d43d907889945bc5d6687f2f13c7"
 
 [[package]]
 name = "hamr"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "clap",
 ]
 
 [[package]]
 name = "hamr-cli"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "clap",
  "color-eyre",

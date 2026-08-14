@@ -3,10 +3,10 @@ resolver = "3"
 members = ["hamr", "hamr-cli"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 license = "MIT"
 
 [workspace.dependencies]
-clap = { version = "4", default-features = false }
+clap = { version = "4" }
 thiserror = { version = "2", default-features = false }
