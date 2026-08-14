@@ -1,13 +1,18 @@
 [package]
 name = "hamr"
 description = "WIP: implementation of @p2r3's ha.mr link compression algorithm in Rust"
+
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
 clap = { workspace = true, features = ["derive"], optional = true }
+thiserror.workspace = true
+
+[dev-dependencies]
+rstest = "0.26"
 
 [features]
 default = ["std"]
-std = ["dep:clap"]
+std = ["dep:clap", "thiserror/std"]
