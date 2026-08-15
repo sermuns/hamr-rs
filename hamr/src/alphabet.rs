@@ -62,6 +62,27 @@ pub const OUTPUT_ALPHABET_QR: &[char] = &[
 // TODO:
 pub const OUTPUT_ALPHABET_EMOJI: &[char] = &[];
 
+// Growing subcategories of the full URL alphabet
+// Each also includes the hyphen and underscore as common separators
+pub const SUBALPHABETS: &[&str] = &[
+    // Numbers only
+    "0123456789-_",
+    // Uppercase only
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ-_",
+    // Lowercase only
+    "abcdefghijklmnopqrstuvwxyz-_",
+    // Uppercase and numbers
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_",
+    // Lowercase and numbers
+    "abcdefghijklmnopqrstuvwxyz0123456789-_",
+    // Uppercase and lowercase
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_",
+    // Upercase, lowercase and numbers (base64)
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_",
+    // Full alphabet without slash character
+    "!#$&'()*+,-.0123456789:;=?~@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz%",
+];
+
 #[cfg(test)]
 mod tests {
     use super::*;

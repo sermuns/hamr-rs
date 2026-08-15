@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 clap = { workspace = true, features = ["derive"], optional = true }
+strum.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
@@ -15,4 +16,4 @@ rstest = "0.26"
 
 [features]
 default = ["std"]
-std = ["dep:clap", "thiserror/std"]
+std = ["dep:clap", "thiserror/std", "strum/std"]

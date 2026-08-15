@@ -6,3 +6,5 @@ pub mod alphabet;
 
 mod decompress;
 pub use decompress::decompress;
+
+mod segment_type;
