@@ -8,3 +8,5 @@ mod decompress;
 pub use decompress::decompress;
 
 mod segment_type;
+
+mod huffman;
