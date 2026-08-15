@@ -36,7 +36,7 @@ fn main() -> color_eyre::Result<()> {
             let is_qr_code = link.starts_with('/');
             payload = &payload[1..];
 
-            let use_emoji = payload.chars().any(|c| !OUTPUT_ALPHABET_ASCII.contains(c));
+            let use_emoji = payload.chars().any(|c| !OUTPUT_ALPHABET_ASCII.contains(&c));
 
             let mut decompressed = String::new();
             if is_qr_code {
