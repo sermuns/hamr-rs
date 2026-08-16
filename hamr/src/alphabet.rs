@@ -93,6 +93,7 @@ mod tests {
     #[case(Alphabet::Ascii, "A", 30)]
     #[case(Alphabet::Ascii, "!!", 85)]
     #[case(Alphabet::Ascii, "!!!", 7141)]
+    #[case(Alphabet::Ascii, "CH", 3140)]
     #[case(Alphabet::Qr, "$", 1)]
     #[case(Alphabet::Qr, "$$", 44)]
     fn str_to_number_works(#[case] alphabet: Alphabet, #[case] input: &str, #[case] expected: u64) {
