@@ -8,11 +8,11 @@ pub trait Lookup {
 }
 
 pub struct HuffmanDecode {
-    pub new_number: usize,
+    pub new_number: u64,
     pub digit: &'static str,
 }
 
-pub fn huffman_decode<L: Lookup>(mut number: usize) -> HuffmanDecode {
+pub fn huffman_decode<L: Lookup>(mut number: u64) -> HuffmanDecode {
     let mut sequence = String::new();
 
     let digit = loop {

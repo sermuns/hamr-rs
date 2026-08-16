@@ -40,7 +40,7 @@ pub fn decompress(
     number >>= 1;
     let mut port = 0;
     if has_port {
-        const U16_MAX_PLUS_ONE: usize = u16::MAX as usize + 1;
+        const U16_MAX_PLUS_ONE: u64 = u16::MAX as u64 + 1;
         port = number % U16_MAX_PLUS_ONE;
         number /= U16_MAX_PLUS_ONE;
     }
@@ -109,7 +109,10 @@ pub fn decompress(
     }
 
     let mut current_segment_type =
-        SegmentType::from_repr(number % 3).expect("segment type index should be < 3");
+        match SegmentType::from_repr((number % 3) as usize) {
+            None => panic!("{}", number),
+            Some(s) => s,
+        };
     number /= 3;
 
     let mut query_param_index = 0;
@@ -134,8 +137,8 @@ pub fn decompress(
             }
         }
 
-        let variant = number % (SUBALPHABETS.len() + 1);
-        number /= SUBALPHABETS.len() + 1;
+        let variant = number % (SUBALPHABETS.len() as u64 + 1);
+        number /= SUBALPHABETS.len() as u64 + 1;
 
         // Variant 0 is Huffman code, rest are subalphabets
         if variant == 0 {
@@ -153,11 +156,11 @@ pub fn decompress(
                 }
             }
         } else {
-            let subalphabet = SUBALPHABETS[variant - 1];
+            let subalphabet = SUBALPHABETS[usize::try_from(variant).unwrap() - 1];
             let subalphabet_length = subalphabet.len() + 1;
             while number > 1 {
-                let index = number % subalphabet_length;
-                number /= subalphabet_length;
+                let index = (number % subalphabet_length as u64) as usize;
+                number /= subalphabet_length as u64;
                 if index == 0 {
                     break;
                 }
@@ -214,4 +217,18 @@ pub fn decompress(
     output.write_str(path_from_query)?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::*;
+
+    #[rstest]
+    #[case("http://ha.mr#OM(", Alphabet::Ascii, "https://google.com")]
+    fn decompress_works(#[case] payload: &str, #[case] alphabet: Alphabet, #[case] expected: &str) {
+        let mut output = String::new();
+        decompress(payload, alphabet, &mut output).unwrap();
+        assert_eq!(output, expected);
+    }
 }

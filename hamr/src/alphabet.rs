@@ -16,9 +16,8 @@ pub enum StrToNumError {
 }
 
 impl Alphabet {
-    // TODO: maybe don't use `usize`?
-    pub fn str_to_number(&self, input: &str) -> Result<usize, StrToNumError> {
-        let mut number = 0;
+    pub fn str_to_number(&self, input: &str) -> Result<u64, StrToNumError> {
+        let mut number = 0u64;
 
         for c in input.chars() {
             let digit = self
@@ -27,8 +26,9 @@ impl Alphabet {
                 .position(|a| *a == c)
                 .ok_or_else(|| StrToNumError::InvalidCharacter(c))?;
 
-            number *= self.alphabet_size();
-            number += digit + 1;
+            // BUG: no idea if it should be wrapping..
+            number = number.wrapping_mul(self.alphabet_size() as u64);
+            number += digit as u64 + 1;
         }
 
         Ok(number)
@@ -95,11 +95,7 @@ mod tests {
     #[case(Alphabet::Ascii, "!!!", 7141)]
     #[case(Alphabet::Qr, "$", 1)]
     #[case(Alphabet::Qr, "$$", 44)]
-    fn str_to_number_works(
-        #[case] alphabet: Alphabet,
-        #[case] input: &str,
-        #[case] expected: usize,
-    ) {
+    fn str_to_number_works(#[case] alphabet: Alphabet, #[case] input: &str, #[case] expected: u64) {
         let result = alphabet.str_to_number(input).unwrap();
         assert_eq!(result, expected);
     }
