@@ -109,10 +109,7 @@ pub fn decompress(
     }
 
     let mut current_segment_type =
-        match SegmentType::from_repr((number % 3) as usize) {
-            None => panic!("{}", number),
-            Some(s) => s,
-        };
+        SegmentType::from_repr((number % 3) as usize).expect("segment type index should < 3");
     number /= 3;
 
     let mut query_param_index = 0;
