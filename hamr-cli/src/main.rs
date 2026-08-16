@@ -2,7 +2,11 @@ use std::io::stdout;
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::OptionExt;
-use hamr::alphabet::{Alphabet, OUTPUT_ALPHABET_ASCII};
+use hamr::{
+    HAMR_DOMAIN, HAMR_URL_HASH, HAMR_URL_QR,
+    alphabet::{Alphabet, OUTPUT_ALPHABET_ASCII},
+    compress,
+};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -16,7 +20,7 @@ enum Command {
     #[command(arg_required_else_help = true)]
     Decompress { link: String },
     #[command(arg_required_else_help = true)]
-    Compress { input: String, alphabet: Alphabet },
+    Compress { alphabet: Alphabet, link: String },
 }
 
 fn main() -> color_eyre::Result<()> {
@@ -26,7 +30,6 @@ fn main() -> color_eyre::Result<()> {
         Command::Decompress { link } => {
             let lowercase_link = link.to_lowercase();
 
-            const HAMR_DOMAIN: &str = "ha.mr";
             let payload_start_byte_index = lowercase_link
                 .find(HAMR_DOMAIN)
                 .map(|i| i + HAMR_DOMAIN.len())
@@ -54,6 +57,23 @@ fn main() -> color_eyre::Result<()> {
 
             Ok(())
         }
-        Command::Compress { .. } => todo!(),
+        Command::Compress { alphabet, link } => {
+            let mut compressed = String::new();
+
+            match alphabet {
+                Alphabet::Qr => {
+                    compressed += HAMR_URL_QR;
+                    todo!();
+                }
+                Alphabet::Ascii | Alphabet::Emoji => {
+                    compressed += HAMR_URL_HASH;
+                    compress(&link, alphabet, &mut compressed)?;
+                }
+            }
+
+            println!("{}", compressed);
+
+            Ok(())
+        }
     }
 }
