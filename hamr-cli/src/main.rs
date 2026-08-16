@@ -39,9 +39,18 @@ fn main() -> color_eyre::Result<()> {
             let use_emoji = payload.chars().any(|c| !OUTPUT_ALPHABET_ASCII.contains(&c));
 
             let mut decompressed = String::new();
-            if is_qr_code {
-                hamr::decompress(payload, Alphabet::Qr, &mut decompressed);
-            }
+            hamr::decompress(
+                payload,
+                if is_qr_code {
+                    Alphabet::Qr
+                } else if use_emoji {
+                    Alphabet::Emoji
+                } else {
+                    Alphabet::Ascii
+                },
+                &mut decompressed,
+            )?;
+            println!("{}", decompressed);
 
             Ok(())
         }
