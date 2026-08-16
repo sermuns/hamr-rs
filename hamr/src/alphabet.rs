@@ -19,7 +19,8 @@ impl Alphabet {
     pub fn str_to_number(&self, input: &str) -> Result<u64, StrToNumError> {
         let mut number = 0u64;
 
-        for c in input.chars() {
+        // BUG: should it be reversed?
+        for c in input.chars().rev() {
             let digit = self
                 .get_slice()
                 .iter()
