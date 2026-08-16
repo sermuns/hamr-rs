@@ -36,10 +36,10 @@ fn generate_code_from_dict(
 
     // encode
     writeln!(out_file, "pub struct {struct_name}Encode;").unwrap();
-    writeln!(out_file, "impl {struct_name}Encode {{").unwrap();
+    writeln!(out_file, "impl super::Lookup for {struct_name}Encode {{").unwrap();
     writeln!(
         out_file,
-        "pub fn lookup(key: &str) -> Option<&'static str> {{"
+        "fn lookup(key: &str) -> Option<&'static str> {{"
     )
     .unwrap();
     writeln!(out_file, "match key {{").unwrap();
@@ -53,10 +53,10 @@ fn generate_code_from_dict(
 
     // decode
     writeln!(out_file, "pub struct {struct_name}Decode;").unwrap();
-    writeln!(out_file, "impl {struct_name}Decode {{").unwrap();
+    writeln!(out_file, "impl super::Lookup for {struct_name}Decode {{").unwrap();
     writeln!(
         out_file,
-        "pub fn lookup(key: &str) -> Option<&'static str> {{"
+        "fn lookup(key: &str) -> Option<&'static str> {{"
     )
     .unwrap();
     writeln!(out_file, "match key {{").unwrap();

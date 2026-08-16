@@ -1,19 +1,33 @@
-pub enum Lookup {
-    TldEncode,
-    SldEncode,
-    DomainEncode,
-    PathEncode,
-    TldDecode,
-    SldDecode,
-    DomainDecode,
-    PathDecode,
+pub mod domain;
+pub mod path;
+pub mod sld;
+pub mod tld;
+
+pub trait Lookup {
+    fn lookup(key: &str) -> Option<&'static str>;
 }
 
-mod domain;
-mod path;
-mod sld;
-mod tld;
+pub struct HuffmanDecode {
+    pub new_number: usize,
+    pub digit: &'static str,
+}
 
-pub fn huffman_decode(number: usize, lookup: Lookup) {
-    path::PathEncode::lookup("ok")
+pub fn huffman_decode<L: Lookup>(mut number: usize) -> HuffmanDecode {
+    let mut sequence = String::new();
+
+    let digit = loop {
+        sequence += if number & 1 != 0 { "1" } else { "0" };
+        number >>= 1;
+        if sequence.len() > 20 {
+            panic!("Huffman sequence too long: '{sequence}'");
+        }
+        if let Some(digit) = L::lookup(&sequence) {
+            break digit;
+        }
+    };
+
+    HuffmanDecode {
+        new_number: number,
+        digit,
+    }
 }

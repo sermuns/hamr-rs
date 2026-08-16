@@ -4,20 +4,26 @@ use thiserror::Error;
 
 use crate::{
     alphabet::{self, Alphabet, SUBALPHABETS},
+    huffman::{
+        HuffmanDecode, domain::DomainDecode, huffman_decode, path::PathDecode, sld::SldDecode,
+        tld::TldDecode,
+    },
     segment_type::SegmentType,
 };
 
 #[derive(Error, Debug)]
 pub enum DecompressionError {
-    #[error("{0}")]
+    #[error("StrToNumError: {0}")]
     StrToNumError(#[from] alphabet::StrToNumError),
+    #[error("Fmt error: {0}")]
+    Fmt(#[from] core::fmt::Error),
 }
 
 /// Decodes and decompresses the payload (writing into `output`) assuming the given alphabet and produces a full link.
 pub fn decompress(
     payload: &str,
     alphabet: Alphabet,
-    output: impl Write,
+    mut output: impl Write,
 ) -> Result<(), DecompressionError> {
     let mut number = alphabet.str_to_number(payload)?;
 
@@ -40,9 +46,9 @@ pub fn decompress(
     }
 
     // TLD
-    let tld_decode_result = huffman_decode(number, tld_decode);
-    number = tld_decode_result.new_number;
-    let tld = tld_decode_result.digit;
+    let HuffmanDecode { new_number, digit } = huffman_decode::<TldDecode>(number);
+    number = new_number;
+    let tld = digit;
 
     // "www." prefix
     let has_www = number & 1 != 0;
@@ -73,17 +79,17 @@ pub fn decompress(
         number >>= 1;
     }
 
-    let domain = String::new();
-    let subdomain = String::new();
-    let path = String::new();
+    let mut domain = String::new();
+    let mut subdomain = String::new();
+    let mut path = String::new();
 
     if has_known_sld {
-        let sld_decode_result = huffman_decode(number, sld_decode);
-        number = sld_decode_result.new_number;
-        domain = sld_decode_result.digit;
+        let HuffmanDecode { new_number, digit } = huffman_decode::<SldDecode>(number);
+        number = new_number;
+        domain = digit.to_string();
         if has_subdomain {
             while number > 1 {
-                let SldDecodeResult { new_number, digit } = huffman_decode(number, domain_decode);
+                let HuffmanDecode { new_number, digit } = huffman_decode::<DomainDecode>(number);
                 number = new_number;
                 if digit == "END" {
                     break;
@@ -93,7 +99,7 @@ pub fn decompress(
         }
     } else {
         while number > 1 {
-            let SldDecodeResult { new_number, digit } = huffman_decode(number, domain_decode);
+            let HuffmanDecode { new_number, digit } = huffman_decode::<DomainDecode>(number);
             number = new_number;
             if digit == "END" {
                 break;
@@ -102,11 +108,11 @@ pub fn decompress(
         }
     }
 
-    let current_segment_type =
+    let mut current_segment_type =
         SegmentType::from_repr(number % 3).expect("segment type index should be < 3");
     number /= 3;
 
-    let query_param_index = 0;
+    let mut query_param_index = 0;
 
     while number > 1 {
         match current_segment_type {
@@ -134,7 +140,7 @@ pub fn decompress(
         // Variant 0 is Huffman code, rest are subalphabets
         if variant == 0 {
             while number > 1 {
-                let SldDecodeResult { new_number, digit } = huffman_decode(number, path_decode);
+                let HuffmanDecode { new_number, digit } = huffman_decode::<PathDecode>(number);
                 number = new_number;
                 if digit == "#" && !matches!(current_segment_type, SegmentType::Hash) {
                     break;
@@ -190,22 +196,22 @@ pub fn decompress(
         .unwrap_or(&path);
     let path_from_query = path_split_index.map(|index| &path[index..]).unwrap_or("");
 
-    output.write_str(if is_https { "https://" } else { "http://" });
+    output.write_str(if is_https { "https://" } else { "http://" })?;
     if has_www {
-        output.write_str("www.");
+        output.write_str("www.")?;
     }
-    output.write_str(&subdomain);
-    output.write_str(&domain);
+    output.write_str(&subdomain)?;
+    output.write_str(&domain)?;
     if !tld.is_empty() {
-        output.write_str(".");
-        output.write_str(tld);
+        output.write_str(".")?;
+        output.write_str(tld)?;
     }
     if has_port {
-        write!(output, ":{}", port);
+        write!(output, ":{}", port)?;
     }
-    output.write_str(path_before_query);
-    output.write_str(index_suffix);
-    output.write_str(path_from_query);
+    output.write_str(path_before_query)?;
+    output.write_str(index_suffix)?;
+    output.write_str(path_from_query)?;
 
     Ok(())
 }
