@@ -222,9 +222,9 @@ mod tests {
     use rstest::*;
 
     #[rstest]
-    #[case("http://ha.mr#~M(", Alphabet::Ascii, "http://google.com")]
-    #[case("http://ha.mr#OM(", Alphabet::Ascii, "https://google.com")]
-    #[case("http://ha.mr#CH", Alphabet::Ascii, "http://youtube.com")]
+    #[case("~M(", Alphabet::Ascii, "http://google.com")]
+    #[case("OM(", Alphabet::Ascii, "https://google.com")]
+    #[case("CH", Alphabet::Ascii, "http://youtube.com")]
     fn decompress_works(#[case] payload: &str, #[case] alphabet: Alphabet, #[case] expected: &str) {
         let mut output = String::new();
         decompress(payload, alphabet, &mut output).unwrap();
