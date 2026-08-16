@@ -5,11 +5,15 @@ pub enum Lookup {
     PathEncode,
     TldDecode,
     SldDecode,
-    DomaiDeecode,
+    DomainDecode,
     PathDecode,
 }
 
-mod lookup;
+mod domain;
+mod path;
+mod sld;
+mod tld;
 
-pub fn huffman_decode(number: usize, lookup: Lookup) {}
-
+pub fn huffman_decode(number: usize, lookup: Lookup) {
+    path::PathEncode::lookup("ok")
+}
