@@ -1,22 +1,28 @@
 use core::fmt::Write;
-use std::borrow::Cow;
 
 use thiserror::Error;
 use url::Url;
 
 use crate::{
     alphabet::{Alphabet, SUBALPHABETS},
-    huffman::{Lookup, sld::SLD_LIST, tld::TldEncode},
+    huffman::{Lookup, huffman_encode, path::PathEncode, sld::SLD_LIST, tld::TldEncode},
     segment_type::SegmentType,
 };
 
 pub enum Segment<'a> {
     Hash(&'a str),
     Path(&'a str),
-    Query {
-        key: Cow<'a, str>,
-        value: Cow<'a, str>,
-    },
+    Query(&'a str),
+}
+
+impl Segment<'_> {
+    pub fn value(&self) -> &'_ str {
+        match self {
+            Self::Hash(v) => v,
+            Self::Path(v) => v,
+            Self::Query(v) => v,
+        }
+    }
 }
 
 #[derive(Error, Debug)]
@@ -90,10 +96,11 @@ pub fn compress(
         _ => (false, false),
     };
 
-    let query_params = url
-        .query_pairs()
-        .map(|(key, value)| Segment::Query { key, value });
-    path_segments.extend(query_params);
+    if let Some(query) = url.query() {
+        // BUG: not sure if correctly splitting '&'
+        let query_params = query.split('&').map(|q| Segment::Query(q));
+        path_segments.extend(query_params);
+    }
 
     if let Some(hash) = url.fragment() {
         path_segments.push(Segment::Hash(hash));
@@ -114,10 +121,10 @@ pub fn compress(
             //   second bit indicates whether we're skipping straight to the hash.
             number <<= 1;
             match (&last_segment_type, segment) {
-                (SegmentType::Hash, Segment::Query { .. }) => {
+                (SegmentType::Hash, Segment::Query(..)) => {
                     number += 1;
                 }
-                (SegmentType::Hash, Segment::Path { .. }) => {
+                (SegmentType::Hash, Segment::Path(..)) => {
                     number += 1; // Second bit is 1
                     number <<= 1;
                     number += 1;
@@ -137,10 +144,73 @@ pub fn compress(
 
         // Look for smallest subalphabet that fits this path segment
         let mut subalphabet_index = None;
-        let mut subalphabet = None;
         for (i, subalphabet) in SUBALPHABETS.iter().enumerate() {
-            if 
+            if segment.value().chars().all(|c| subalphabet.contains(c)) {
+                subalphabet_index = Some(i);
+            }
         }
+
+        let path_encode_hash = PathEncode::lookup("#").expect("# should be in PathEncode");
+
+        // Compute number after Huffman coding
+        let mut huffman_number = if first_iteration {
+            number
+        } else {
+            huffman_encode(number, path_encode_hash)
+        };
+
+        for i in (0..segment.value().len()).rev() {
+            if &segment.value()[i - 2..i - 1] == "%" {
+                let byte = u8::from_str_radix(&segment.value()[i - 1..i + 1], 16).unwrap();
+                huffman_number *= u8::MAX as u64;
+                huffman_number += byte as u64;
+                huffman_number = huffman_encode(huffman_number, path_encode_hash);
+                continue;
+            }
+            let c = &segment.value()[i..i + 1];
+            if c != "~" {
+                huffman_number = huffman_encode(huffman_number, PathEncode::lookup(c).unwrap());
+                continue;
+            }
+            // HACK:
+            // Our Huffman tree is missing the tilde character (whoops!)
+            // It's too late to change it now without bumping the version
+            // number, and that currently costs 1 bit. Tildes are so rare
+            // that it makes more sense to %-encode them instead.
+            huffman_number *= u8::MAX as u64;
+            huffman_number += 126;
+            huffman_number = huffman_encode(huffman_number, path_encode_hash);
+        }
+
+        // Encode segment variant as 0
+        // (We're adding +1 here to introduce 0 as a special value indicating Huffman)
+        huffman_number *= SUBALPHABETS.len() as u64 + 1;
+
+        // If no subalphabet fits this segment, Huffman is the only option.
+        // Encoding a character missing from the subalphabet would produce the
+        // value 0, which the decoder treats as the end of the segment.
+        let Some(subalphabet_index) = subalphabet_index else {
+            number = huffman_number;
+            continue;
+        };
+
+        let subalphabet = SUBALPHABETS[subalphabet_index];
+    // Compute number after encoding with chosen subalphabet
+    let subalphabetLength = subalphabet.len() + 1;
+    let subalphabetNumber = if first_iteration{ number } else { number * subalphabetLength};
+    for i = segment.value.length - 1; i >= 0; i--) {
+      subalphabetNumber *= subalphabetLength;
+      subalphabetNumber += BigInt(subalphabet.indexOf(segment.value[i]) + 1);
+    }
+    // Encode segment variant as subalphabet index + 1
+    subalphabetNumber *= BigInt(subalphabets.length + 1);
+    subalphabetNumber += BigInt(subalphabetIndex + 1);
+    // Compare candidate numbers, pick smallest one
+    if (huffmanNumber < subalphabetNumber) {
+      number = huffmanNumber;
+    } else {
+      number = subalphabetNumber;
+    }
     }
 
     Ok(())

@@ -31,3 +31,13 @@ pub fn huffman_decode<L: Lookup>(mut number: u64) -> HuffmanDecode {
         digit,
     }
 }
+
+pub fn huffman_encode(mut number: u64, sequence: &str) -> u64 {
+    for c in sequence.chars().rev() {
+        number <<= 1;
+        if c == '1' {
+            number += 1;
+        }
+    }
+    number
+}
